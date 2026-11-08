@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>メロディをドレミに</title>
+
+ <style>
+  @font-face {
+    font-family: "Checkpoint";
+    src: url("/font.otf") format("opentype");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    min-height: 100%;
+    background-color: #ba2636;
+    background-image: radial-gradient(
+      #ffffff24 1.5px,
+      transparent 1.5px
+    );
+    background-size: 20px 20px;
+  }
+
+  body {
+    max-width: 760px;
+    margin: 48px auto;
+    padding: 36px;
+    font-family: "Checkpoint", sans-serif;
+    color: #222;
+    background: #fff8e8;
+    border: 3px solid #222;
+    border-radius: 24px;
+    box-shadow: 9px 9px 0 #222;
+  }
+
+  h1 {
+    margin: 0 0 20px;
+    font-size: clamp(28px, 6vw, 44px);
+    line-height: 1.5;
+    color: #ba2636;
+    text-shadow: 2px 2px 0 #ffd75e;
+  }
+
+  h2 {
+    display: table;
+    margin: 30px 0 16px;
+    padding: 6px 16px;
+    font-size: 22px;
+    background: #ffd75e;
+    border: 2px solid #222;
+    border-radius: 8px;
+    box-shadow: 3px 3px 0 #222;
+    transform: rotate(-2deg);
+  }
+
+  p {
+    line-height: 1.9;
+  }
+
+  label {
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  input {
+    max-width: 100%;
+    padding: 10px 12px;
+    color: #222;
+    background: #fff;
+    border: 2px solid #222;
+    border-radius: 10px;
+  }
+
+  input[type="number"] {
+    width: 110px;
+    margin-left: 8px;
+  }
+
+  input[type="file"] {
+    display: block;
+    width: 100%;
+    margin: 8px 0 22px;
+    padding: 12px;
+    border-style: dashed;
+    background: #fffdf5;
+  }
+
+  input[type="file"]::file-selector-button {
+    margin-right: 12px;
+    padding: 8px 12px;
+    font: inherit;
+    color: #222;
+    background: #bde9e0;
+    border: 2px solid #222;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+
+  button {
+    margin: 0 8px 12px 0;
+    padding: 12px 20px;
+    color: #222;
+    background: #ffd75e;
+    border: 2px solid #222;
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 #222;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  button:hover {
+    transform: translate(-1px, -2px);
+    box-shadow: 5px 6px 0 #222;
+  }
+
+  button:active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 #222;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  #analyze {
+    display: block;
+    width: 100%;
+    margin-top: 24px;
+    padding: 16px;
+    font-size: 23px;
+  }
+
+  #playNotes {
+    background: #bde9e0;
+  }
+
+  #stopNotes {
+    background: #ffc7cf;
+  }
+
+  audio {
+    display: block;
+    width: 100%;
+    margin: 24px 0;
+  }
+
+  #result {
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 18px;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    font-family: sans-serif;
+    font-size: 15px;
+    line-height: 1.9;
+    background: #fff;
+    border: 2px solid #222;
+    border-radius: 12px;
+  }
+
+  #score {
+    display: block;
+    margin-top: 16px;
+    color: #222;
+    font-family: sans-serif;
+    background: #fff;
+    border: 2px solid #222;
+    border-radius: 12px;
+  }
+
+  button:focus-visible,
+  input:focus-visible {
+    outline: 3px solid #236fbe;
+    outline-offset: 4px;
+  }
+
+  @media (max-width: 600px) {
+    body {
+      margin: 20px 14px;
+      padding: 22px 18px;
+      border-radius: 18px;
+      box-shadow: 5px 5px 0 #222;
+    }
+
+    input[type="number"] {
+      display: block;
+      width: 100%;
+      margin: 4px 0 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button {
+      transition: none;
+    }
+  }
+</style></head>
+<body>
+  <h1>メロディをドレミに</h1>
+  <p>曲を選んで、ボーカルのメロディを調べます。</p>
+
+  <label for="song">音声ファイルを選ぶ</label>
+  <input type="file" id="song" accept="audio/*">
+	<p>
+  <label for="start">開始位置（秒）</label>
+  <input type="number" id="start" min="0" value="0">
+</p>
+
+<p>
+  <label for="duration">解析する長さ（秒）</label>
+  <input type="number" id="duration" min="1" max="60" value="15">
+</p>
+<p>
+  <label for="bpm">テンポ（BPM）</label>
+  <input type="number" id="bpm" min="30" max="300" value="120">
+</p>
+<p>
+  <label>
+    <input type="checkbox" id="separated">
+    分離済みの歌声を使う
+  </label>
+<p>
+  <label>
+    <input type="checkbox" id="useCrepe">
+    torchcrepeで音程を解析する
+  </label>
+</p>
+</p>
+  <button type="button"id="analyze">解析する</button>
+	<audio id="player" controls></audio>
+<div id="vocalPreview" hidden>
+  <h2>解析に使った歌声</h2>
+  <p>指定した区間の歌声です。再生位置の0秒が区間の先頭です。</p>
+  <audio id="vocalPlayer" controls></audio>
+</div>
+  <h2>解析結果</h2>
+  <p id="result">ここにドレミを表示します。</p>
+<h2>楽譜</h2>
+<button type="button" id="playNotes">楽譜を再生</button>
+<button type="button" id="stopNotes">停止</button>
+<div style="overflow-x: auto;">
+  <svg id="score" width="600" height="300"></svg>
+</div>
+<h2>音程グラフ</h2>
+<p>灰色：元の音程 ／ 赤色：補正後</p>
+
+<div style="overflow-x: auto;">
+  <svg
+    id="pitchGraph"
+    width="640"
+    height="280"
+    style="display: block; background: white; border: 2px solid #222; border-radius: 12px;"
+  ></svg>
+</div>
+<script>
+  const song = document.getElementById("song");
+  const player = document.getElementById("player");
+  const analyze = document.getElementById("analyze");
+  const result = document.getElementById("result");
+let latestNotes = [];
+
+document.getElementById("bpm").addEventListener("input", () => {
+  const bpm = Number(document.getElementById("bpm").value);
+
+  if (Number.isFinite(bpm) && bpm >= 30 && bpm <= 300) {
+    drawScore(latestNotes);
+  }
+});
+
+  song.addEventListener("change", () => {
+    const file = song.files[0];
+    if (!file) return;
+
+    player.src = URL.createObjectURL(file);
+    player.load();
+  });
+
+  analyze.addEventListener("click", async () => {
+    const file = song.files[0];
+
+    if (!file) {
+      result.textContent = "先に曲を選んでください。";
+      return;
+    }
+
+    const data = new FormData();
+    data.append("file", file);
+	data.append("start", document.getElementById("start").value);
+data.append("duration", document.getElementById("duration").value);
+data.append(
+  "use_crepe",
+  document.getElementById("useCrepe").checked
+);
+data.append(
+  "separated",
+  document.getElementById("separated").checked
+);
+
+     result.textContent =
+      "歌声を分離・解析しています。数分かかる場合があります…";
+
+    try {
+      const response = await fetch("/analyze", {
+        method: "POST",
+        body: data
+      });
+
+      if (!response.ok) {
+        throw new Error("送信に失敗しました：" + response.status);
+      }
+
+      const answer = await response.json();
+      const vocalPlayer = document.getElementById("vocalPlayer");
+      const vocalPreview = document.getElementById("vocalPreview");
+
+      vocalPlayer.pause();
+
+      if (answer.preview_url) {
+        vocalPlayer.src = answer.preview_url;
+        vocalPlayer.load();
+        vocalPreview.hidden = false;
+      } else {
+        vocalPlayer.removeAttribute("src");
+        vocalPlayer.load();
+        vocalPreview.hidden = true;
+      }
+      result.textContent = answer.message;
+latestNotes = answer.notes || [];
+drawScore(latestNotes);
+ drawPitchGraph(answer);
+    } catch (error) {
+      result.textContent = "通信エラー：" + error.message;
+    }
+  });
+function drawScore(notes) {
+  const svg = document.getElementById("score");
+  const ns = "http://www.w3.org/2000/svg";
+
+  svg.replaceChildren();
+
+  const width = Math.max(600, 100 + notes.length * 65);
+  svg.setAttribute("width", width);
+
+  function add(tag, attributes, text) {
+    const element = document.createElementNS(ns, tag);
+
+    for (const key in attributes) {
+      element.setAttribute(key, attributes[key]);
+    }
+
+    if (text !== undefined) {
+      element.textContent = text;
+    }
+
+    svg.appendChild(element);
+  }
+
+  // 五線：一番下の線はミ4
+  for (let i = 0; i < 5; i++) {
+    add("line", {
+      x1: 15,
+      y1: 110 + i * 10,
+      x2: width - 15,
+      y2: 110 + i * 10,
+      stroke: "black"
+    });
+  }
+
+  add("text", {
+    x: 22,
+    y: 153,
+    "font-size": 58
+  }, "𝄞");
+
+  // 半音ごとの音を、五線上の位置に対応させる
+  const steps = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
+  const sharpPitches = [1, 3, 6, 8, 10];
+
+  notes.forEach((note, i) => {
+    const midi = note.midi;
+    const pitch = midi % 12;
+    const octave = Math.floor(midi / 12) - 1;
+
+    const position = octave * 7 + steps[pitch];
+    const e4Position = 4 * 7 + 2;
+
+    const x = 100 + i * 65;
+    const y = 150 - (position - e4Position) * 5;
+
+    // 五線の外に出る音の加線
+    for (let lineY = 160; lineY <= y; lineY += 10) {
+      addLedger(lineY);
+    }
+
+    for (let lineY = 100; lineY >= y; lineY -= 10) {
+      addLedger(lineY);
+    }
+
+    function addLedger(lineY) {
+      add("line", {
+        x1: x - 12,
+        y1: lineY,
+        x2: x + 12,
+        y2: lineY,
+        stroke: "black"
+      });
+    }
+
+    if (sharpPitches.includes(pitch)) {
+      add("text", {
+        x: x - 24,
+        y: y + 5,
+        "font-size": 20
+      }, "♯");
+    }
+
+    const bpm = Number(document.getElementById("bpm").value);
+
+    if (!Number.isFinite(bpm) || bpm < 30 || bpm > 300) {
+      return;
+    }
+
+    // 四分音符を1拍として、音の長さを計算
+    const beats = note.duration / (60 / bpm);
+
+    const types = [
+      { beats: 0.25, name: "十六分音符", flags: 2 },
+      { beats: 0.5, name: "八分音符", flags: 1 },
+      { beats: 1, name: "四分音符", flags: 0 },
+      { beats: 2, name: "二分音符", flags: 0 },
+      { beats: 4, name: "全音符", flags: 0 }
+    ];
+
+    const type = types.reduce((best, candidate) =>
+      Math.abs(candidate.beats - beats) <
+      Math.abs(best.beats - beats) ? candidate : best
+    );
+
+    // 二分音符・全音符は白い玉
+    add("ellipse", {
+      cx: x,
+      cy: y,
+      rx: type.beats === 4 ? 9 : 7,
+      ry: 5,
+      fill: type.beats >= 2 ? "white" : "black",
+      stroke: "black",
+      "stroke-width": 1.5
+    });
+
+    // 全音符には棒を付けない
+    if (type.beats !== 4) {
+      const stemDown = y <= 130;
+      const stemX = stemDown ? x - 6 : x + 6;
+      const stemEnd = stemDown ? y + 35 : y - 35;
+
+      add("line", {
+        x1: stemX,
+        y1: y,
+        x2: stemX,
+        y2: stemEnd,
+        stroke: "black",
+        "stroke-width": 2
+      });
+
+      // 八分・十六分音符に旗を付ける
+      for (let flag = 0; flag < type.flags; flag++) {
+        const direction = stemDown ? -1 : 1;
+        const flagY = stemEnd + direction * flag * 7;
+
+        add("path", {
+          d: `M ${stemX} ${flagY}
+              Q ${stemX + 18} ${flagY + direction * 10}
+                ${stemX + 8} ${flagY + direction * 22}`,
+          fill: "none",
+          stroke: "black",
+          "stroke-width": 2
+        });
+      }
+    }
+    add("text", {
+      x: x,
+      y: 245,
+      "text-anchor": "middle",
+      "font-size": 12
+    }, note.note);
+
+    add("text", {
+      x: x,
+      y: 265,
+      "text-anchor": "middle",
+      "font-size": 11
+    }, note.duration + "秒");
+  });
+}
+let audioContext;
+let playingSounds = [];
+
+function stopNotes() {
+  for (const sound of playingSounds) {
+    try {
+      sound.stop();
+    } catch {
+      // 停止済みの音はそのままにする
+    }
+  }
+
+  playingSounds = [];
+}
+
+document.getElementById("playNotes").addEventListener("click", async () => {
+  if (latestNotes.length === 0) {
+    alert("先に曲を解析してください。");
+    return;
+  }
+
+  stopNotes();
+
+  if (!audioContext) {
+    audioContext = new AudioContext();
+  }
+
+  await audioContext.resume();
+
+  const baseTime = audioContext.currentTime + 0.1;
+  const firstStart = latestNotes[0].start;
+
+  for (const note of latestNotes) {
+    const oscillator = audioContext.createOscillator();
+    const volume = audioContext.createGain();
+
+    // MIDI番号を周波数に変換
+    oscillator.frequency.value =
+      440 * Math.pow(2, (note.midi - 69) / 12);
+
+    oscillator.type = "triangle";
+
+    const startTime = baseTime + note.start - firstStart;
+    const length = Math.max(0.03, note.duration);
+    const endTime = startTime + length;
+
+    // 音の出始めと終わりをなめらかにする
+    volume.gain.setValueAtTime(0, startTime);
+    volume.gain.linearRampToValueAtTime(0.25, startTime + 0.01);
+    volume.gain.setValueAtTime(0.25, endTime - 0.01);
+    volume.gain.linearRampToValueAtTime(0, endTime);
+
+    oscillator.connect(volume);
+    volume.connect(audioContext.destination);
+
+    oscillator.start(startTime);
+    oscillator.stop(endTime);
+
+    playingSounds.push(oscillator);
+  }
+});
+
+document.getElementById("stopNotes").addEventListener("click", stopNotes);
+function drawPitchGraph(answer) {
+  const svg = document.getElementById("pitchGraph");
+  const ns = "http://www.w3.org/2000/svg";
+
+  svg.replaceChildren();
+
+  const points = answer.pitch_points || [];
+  const values = points.flatMap(point =>
+    [point.original, point.corrected]
+      .filter(value => Number.isFinite(value))
+  );
+
+  function add(tag, attributes, text) {
+    const element = document.createElementNS(ns, tag);
+
+    for (const key in attributes) {
+      element.setAttribute(key, attributes[key]);
+    }
+
+    if (text !== undefined) {
+      element.textContent = text;
+    }
+
+    svg.appendChild(element);
+  }
+
+  if (values.length === 0) {
+    add("text", {
+      x: 25,
+      y: 50,
+      fill: "#222",
+      "font-family": "sans-serif"
+    }, "表示できる音程がありません。");
+    return;
+  }
+
+  const width = 640;
+  const height = 280;
+  const left = 62;
+  const right = 20;
+  const top = 20;
+  const bottom = 42;
+
+  const low = Math.floor(Math.min(...values)) - 1;
+  const high = Math.ceil(Math.max(...values)) + 1;
+  const start = answer.clip_start;
+  const duration = answer.clip_duration;
+
+  function x(time) {
+    return left +
+      (time - start) / duration * (width - left - right);
+  }
+
+  function y(midi) {
+    return height - bottom -
+      (midi - low) / (high - low) * (height - top - bottom);
+  }
+
+  // 音名と横の目盛り
+  const names = [
+    "ド", "ド♯", "レ", "レ♯", "ミ", "ファ",
+    "ファ♯", "ソ", "ソ♯", "ラ", "ラ♯", "シ"
+  ];
+
+  const interval = high - low > 24 ? 4 : 2;
+
+  for (let midi = low; midi <= high; midi += interval) {
+    add("line", {
+      x1: left,
+      y1: y(midi),
+      x2: width - right,
+      y2: y(midi),
+      stroke: "#e5e5e5"
+    });
+
+    add("text", {
+      x: left - 8,
+      y: y(midi) + 4,
+      "text-anchor": "end",
+      "font-family": "sans-serif",
+      "font-size": 11,
+      fill: "#555"
+    }, names[midi % 12] + (Math.floor(midi / 12) - 1));
+  }
+
+  // 時間の目盛り
+  for (let i = 0; i <= 5; i++) {
+    const time = start + duration * i / 5;
+
+    add("line", {
+      x1: x(time),
+      y1: top,
+      x2: x(time),
+      y2: height - bottom,
+      stroke: "#eeeeee"
+    });
+
+    add("text", {
+      x: x(time),
+      y: height - 16,
+      "text-anchor": "middle",
+      "font-family": "sans-serif",
+      "font-size": 11,
+      fill: "#555"
+    }, time.toFixed(1) + "秒");
+  }
+
+  function drawLine(key, color, thickness) {
+    let path = "";
+    let connected = false;
+
+    for (const point of points) {
+      const value = point[key];
+
+      if (!Number.isFinite(value)) {
+        connected = false;
+        continue;
+      }
+
+      path +=
+        (connected ? " L " : " M ") +
+        x(point.time) + " " + y(value);
+
+      connected = true;
+    }
+
+    add("path", {
+      d: path,
+      fill: "none",
+      stroke: color,
+      "stroke-width": thickness,
+      "stroke-linejoin": "round",
+      "stroke-linecap": "round"
+    });
+  }
+
+  drawLine("original", "#999999", 1.5);
+  drawLine("corrected", "#ba2636", 2.5);
+}
+</script>
+</body>
+</html>

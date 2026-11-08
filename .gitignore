@@ -1,0 +1,26 @@
+# Python の実行環境・キャッシュ
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 解析中に生成される音声・キャッシュ（プロジェクト直下）
+/previews/
+/vocal_cache/
+/separated/
+/test.mp3
+
+# 秘密情報
+.env
+.env.*
+!.env.example
+
+# 開発ツール・OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ログ
+*.log

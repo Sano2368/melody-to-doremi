@@ -1,0 +1,11 @@
+# 添付の app.py から抽出した依存関係（バージョン未固定）
+fastapi
+uvicorn
+python-multipart
+numpy
+librosa
+soundfile
+torch
+torchaudio
+torchcrepe
+demucs
